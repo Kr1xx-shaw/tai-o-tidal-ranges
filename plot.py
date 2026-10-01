@@ -20,6 +20,7 @@ DATA = HERE / "data" / "tides-TAO-2026.json"
 OUT = HERE / "out" / "tai-o-year-plan.png"
 YEAR = 2026
 PAPER, INK, ORANGE = "#f8f6f1", "#334342", "#d46b32"
+BLACK = "#171717"
 PALETTE = [
     "#537d80", "#ad788b", "#a88e47", "#679592", "#c48d9b", "#bea258",
     "#98b7ad", "#dfb0b7", "#d9c68c", "#afc4be", "#e5c1c6", "#e3d6ac",
@@ -87,7 +88,7 @@ def draw(months):
         x, y = to_xy(day, 3.48)
         ax.text(x, y, f"{day:02d}", ha="center", va="center", fontsize=10, color="#8a928b")
 
-    peaks = []
+    peaks, minima = [], []
     for month, color in zip(range(1, 13), PALETTE):
         entries = months[month]
         coordinates = [to_xy(day, value) for day, value in entries]
@@ -101,16 +102,22 @@ def draw(months):
         maximum = max(value for _, value in entries)
         peak_days = [day for day, value in entries if value == maximum]
         peaks.extend(to_xy(day, maximum) for day in peak_days)
-        print(f"{calendar.month_name[month]}: {len(entries)} days; maximum {maximum:.2f} m on day(s) {peak_days}.")
+        minimum = min(value for _, value in entries)
+        minimum_days = [day for day, value in entries if value == minimum]
+        minima.extend(to_xy(day, minimum) for day in minimum_days)
+        print(f"{calendar.month_name[month]}: {len(entries)} days; maximum {maximum:.2f} m on day(s) {peak_days}; minimum {minimum:.2f} m on day(s) {minimum_days}.")
         yy = .75 - (month - 1) * .041
         fig.add_artist(plt.Line2D([.765, .807], [yy, yy], transform=fig.transFigure, color=color, lw=3))
         fig.text(.826, yy - .006, calendar.month_name[month].upper(), fontsize=11)
 
     ax.scatter(*zip(*peaks), s=60, color=ORANGE, edgecolors=PAPER, linewidths=1.3, zorder=10)
+    ax.scatter(*zip(*minima), s=60, color=BLACK, edgecolors=PAPER, linewidths=1.3, zorder=10)
     fig.text(.765, .8, "MONTH / 2026", fontsize=9, color="#7c8880")
     fig.text(.765, .239, "●", fontsize=15, color=ORANGE)
     fig.text(.791, .242, "Monthly maximum", fontsize=10, color="#7b837c")
-    fig.text(.765, .209, "One point = one day", fontsize=10, color="#7b837c")
+    fig.text(.765, .204, "●", fontsize=15, color=BLACK)
+    fig.text(.791, .207, "Monthly minimum", fontsize=10, color="#7b837c")
+    fig.text(.765, .172, "One point = one day", fontsize=10, color="#7b837c")
     fig.add_artist(plt.Line2D([.07, .93], [.125, .125], transform=fig.transFigure, color="#c5cbc1", lw=.7))
     fig.text(.07, .088, "ANGLE = DAY OF MONTH  /  RADIUS = RANGE OF HOURLY TIDE PREDICTIONS (m)", fontsize=9)
     fig.text(.07, .057, "HKO astronomical predictions · Daily samples: 01:00–24:00 HKT · Fixed 31-day angular scale · Dashed joins are not observations.", fontsize=8, color="#7b857d")
